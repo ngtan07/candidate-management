@@ -1,0 +1,81 @@
+# =====================================
+# Dependencies
+# =====================================
+node_modules/
+**/node_modules/
+
+# =====================================
+# Environment variables and secrets
+# =====================================
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Private keys and certificates
+*.pem
+*.key
+
+# =====================================
+# Build output
+# =====================================
+dist/
+build/
+.next/
+out/
+
+# Vite cache
+.vite/
+
+# =====================================
+# Test and coverage
+# =====================================
+coverage/
+.nyc_output/
+
+# =====================================
+# Logs
+# =====================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# =====================================
+# Temporary files and cache
+# =====================================
+tmp/
+temp/
+.cache/
+.parcel-cache/
+
+# Uploaded files (local storage)
+uploads/
+backend/uploads/
+
+# =====================================
+# IDE and editor
+# =====================================
+.idea/
+.vscode/
+
+# NetBeans
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# =====================================
+# Operating system
+# =====================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# =====================================
+# Miscellaneous
+# =====================================
+*.swp
+*.swo

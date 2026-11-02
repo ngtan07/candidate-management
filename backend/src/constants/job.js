@@ -1,0 +1,54 @@
+export const JOB_STATUS = Object.freeze({
+    DRAFT: "DRAFT",
+    OPENING: "OPENING",
+    CLOSED: "CLOSED"
+});
+
+export const EMPLOYMENT_TYPE = Object.freeze({
+    FULL_TIME: "FULL_TIME",
+    PART_TIME: "PART_TIME",
+    INTERNSHIP: "INTERNSHIP",
+    CONTRACT: "CONTRACT",
+    FREELANCE: "FREELANCE"
+});
+
+export const EXPERIENCE_LEVEL = Object.freeze({
+    INTERN: "INTERN",
+    FRESHER: "FRESHER",
+    JUNIOR: "JUNIOR",
+    MIDDLE: "MIDDLE",
+    SENIOR: "SENIOR",
+    LEADER: "LEADER"
+});
+
+export const WORK_LOCATION_TYPE = Object.freeze({
+    ONSITE: "ONSITE",
+    REMOTE: "REMOTE",
+    HYBRID: "HYBRID"
+});
+
+export const JOB_CATEGORY = Object.freeze({
+    IT_SOFTWARE: "IT_SOFTWARE",
+    BUSINESS: "BUSINESS",
+    MARKETING: "MARKETING",
+    DESIGN: "DESIGN",
+    FINANCE_ACCOUNTING: "FINANCE_ACCOUNTING",
+    HUMAN_RESOURCES: "HUMAN_RESOURCES",
+    SALES: "SALES",
+    CUSTOMER_SERVICE: "CUSTOMER_SERVICE",
+    ENGINEERING: "ENGINEERING",
+    EDUCATION: "EDUCATION",
+    LOGISTICS: "LOGISTICS",
+    OTHER: "OTHER"
+});
+
+export const SALARY_PERIOD = Object.freeze({
+    HOUR: "HOUR",
+    MONTH: "MONTH",
+    YEAR: "YEAR"
+});
+
+export const SALARY_CURRENCY = Object.freeze({
+    VND: "VND",
+    USD: "USD"
+});
