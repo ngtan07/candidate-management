@@ -10,6 +10,7 @@ import { MESSAGES } from "./constants/message.js";
 import authRoutes from "./routes/auth.routes.js";
 import jobRoutes from "./routes/job.routes.js";
 import applicationRoutes from "./routes/application.routes.js";
+import userRoutes from "./routes/user.routes.js";
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes)
 app.use("/api/jobs", jobRoutes)
 app.use("/api/applications", applicationRoutes);
+app.use("/api", userRoutes);
 
 
 // 404 handler

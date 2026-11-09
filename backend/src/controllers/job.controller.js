@@ -129,6 +129,36 @@ const deleteJob = async (req, res, next) => {
     }
 };
 
+const getAllJobs = async (req, res, next) => {
+    try {
+        const result = await jobService.getAllJobs(req.query);
+
+        return res.status(200).json({
+            success: true,
+            message: MESSAGES.JOBS_RETRIEVED,
+            data: result
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const getJobById = async (req, res, next) => {
+    try {
+        const job = await jobService.getJobById(
+            req.params.jobId
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: MESSAGES.JOB_RETRIEVED,
+            data: { job }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export default {
     createJob,
     getMyJobs,
@@ -136,5 +166,7 @@ export default {
     updateJob,
     publishJob,
     closeJob,
-    deleteJob
+    deleteJob,
+    getAllJobs,
+    getJobById
 };

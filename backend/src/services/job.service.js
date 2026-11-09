@@ -5,7 +5,6 @@ import { MESSAGES } from "../constants/message.js";
 import { ROLE } from "../constants/role.js";
 import { REGISTRATION_STATUS } from "../constants/registrationStatus.js";
 import { JOB_STATUS } from "../constants/job.js";
-import { buildCandidateJobFilter } from "../utils/job.helper.js";
 
 
 // recruiter
@@ -69,13 +68,28 @@ const getMyJobs = async (recruiterId, query) => {
         Job.find(filter)
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
-            .limit(limit),
+            .limit(limit)
+            .lean(),
 
         Job.countDocuments(filter)
     ]);
 
+    // Attach application counts per job
+    const Application = (await import('../models/Application.js')).default;
+    const jobIds = jobs.map(j => j._id);
+    const counts = await Application.aggregate([
+        { $match: { jobId: { $in: jobIds } } },
+        { $group: { _id: '$jobId', count: { $sum: 1 } } }
+    ]);
+    const countMap = {};
+    counts.forEach(c => { countMap[c._id.toString()] = c.count; });
+    const jobsWithCounts = jobs.map(j => ({
+        ...j,
+        applicationCount: countMap[j._id.toString()] || 0
+    }));
+
     return {
-        jobs,
+        jobs: jobsWithCounts,
         pagination: {
             page,
             limit,
@@ -195,13 +209,71 @@ const getAllJobs = async (query) => {
         }
     }
 
-    // const filter = buildCandidateJobFilter();
+    // Keyword search across title and location
+    if (query.keyword && query.keyword.trim()) {
+        const kw = query.keyword.trim();
+        filter.$or = [
+            { title: { $regex: kw, $options: 'i' } },
+            { location: { $regex: kw, $options: 'i' } }
+        ];
+    }
+
+    // Category filter
+    if (query.category) {
+        filter.category = query.category;
+    }
+
+    // Employment type filter
+    if (query.employmentType) {
+        filter.employmentType = query.employmentType;
+    }
+
+    // Experience level filter
+    if (query.experienceLevel) {
+        filter.experienceLevel = query.experienceLevel;
+    }
+
+    // Work location type filter
+    if (query.workLocationType) {
+        filter.workLocationType = query.workLocationType;
+    }
+
+    // Salary min filter (jobs with salaryMax >= requested min)
+    if (query.salaryMin) {
+        const salaryMin = Number(query.salaryMin);
+        if (!isNaN(salaryMin)) {
+            filter.$and = filter.$and || [];
+            filter.$and.push({
+                $or: [
+                    { salaryMax: { $gte: salaryMin } },
+                    { salaryMin: { $gte: salaryMin } }
+                ]
+            });
+        }
+    }
+
+    // Salary max filter (jobs with salaryMin <= requested max)
+    if (query.salaryMax) {
+        const salaryMax = Number(query.salaryMax);
+        if (!isNaN(salaryMax)) {
+            filter.$and = filter.$and || [];
+            filter.$and.push({
+                $or: [
+                    { salaryMin: { $lte: salaryMax } },
+                    { salaryMax: null },
+                    { salaryMin: null }
+                ]
+            });
+        }
+    }
 
     const [jobs, total] = await Promise.all([
         Job.find(filter)
+            .populate({ path: 'recruiterId', select: 'companyName' })
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
-            .limit(limit),
+            .limit(limit)
+            .lean(),
 
         Job.countDocuments(filter)
     ]);
@@ -217,6 +289,26 @@ const getAllJobs = async (query) => {
     };
 };
 
+const getJobById = async (jobId) => {
+
+    const job = await Job.findOne({
+        _id: jobId,
+        status: JOB_STATUS.OPENING,
+        isVisible: true,
+        isDeleted: false
+    })
+        .populate({
+            path: "recruiterId",
+            select: "companyName"
+        })
+        .lean();
+
+    if (!job) {
+        throw new AppError(MESSAGES.JOB_NOT_FOUND, 404);
+    }
+
+    return job;
+};
 
 
 
@@ -228,5 +320,6 @@ export default {
     publishJob,
     closeJob,
     deleteJob,
-    getAllJobs
+    getAllJobs,
+    getJobById
 };

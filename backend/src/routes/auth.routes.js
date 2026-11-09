@@ -31,6 +31,5 @@ router.post("/login",
 
 // Protected routes
 router.post("/logout", authMiddleware.protect, authController.logout)
-router.get("/me", authMiddleware.protect, authController.getCurrentUser)
 
 export default router;

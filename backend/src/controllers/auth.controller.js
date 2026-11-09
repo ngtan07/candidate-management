@@ -73,19 +73,9 @@ const logout = (req, res) => {
     });
 }
 
-const getCurrentUser = async (req, res) => {
-    const user = await authService.getCurrentUser(req.user.id)
-
-    res.status(200).json({
-        success: true,
-        data: user
-    })
-}
-
 export default {
     registerCandidate,
     registerRecruiter,
     login,
-    logout,
-    getCurrentUser
+    logout
 };

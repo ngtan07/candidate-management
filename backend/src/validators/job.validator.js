@@ -1,4 +1,4 @@
-import { body } from "express-validator";
+import { body, query, param } from "express-validator";
 
 import {
     JOB_CATEGORY,
@@ -203,4 +203,59 @@ export const validateUpdateJob = [
 
             return true;
         })
+];
+
+export const validateGetAllJobs = [
+    query("page")
+        .optional()
+        .isInt({ min: 1 })
+        .withMessage(MESSAGES.PAGE_INVALID),
+
+    query("limit")
+        .optional()
+        .isInt({ min: 1, max: 100 })
+        .withMessage(MESSAGES.LIMIT_INVALID),
+
+    query("keyword")
+        .optional()
+        .trim(),
+
+    query("category")
+        .optional()
+        .isIn(Object.values(JOB_CATEGORY))
+        .withMessage(MESSAGES.JOB_CATEGORY_INVALID),
+
+    query("employmentType")
+        .optional()
+        .isIn(Object.values(EMPLOYMENT_TYPE))
+        .withMessage(MESSAGES.EMPLOYMENT_TYPE_INVALID),
+
+    query("experienceLevel")
+        .optional()
+        .isIn(Object.values(EXPERIENCE_LEVEL))
+        .withMessage(MESSAGES.EXPERIENCE_LEVEL_INVALID),
+
+    query("workLocationType")
+        .optional()
+        .isIn(Object.values(WORK_LOCATION_TYPE))
+        .withMessage(MESSAGES.WORK_LOCATION_TYPE_INVALID),
+
+    query("salaryMin")
+        .optional()
+        .isFloat({ min: 0 })
+        .withMessage(MESSAGES.SALARY_MIN_INVALID),
+
+    query("salaryMax")
+        .optional()
+        .isFloat({ min: 0 })
+        .withMessage(MESSAGES.SALARY_MAX_INVALID)
+];
+
+export const validateGetJobById = [
+    param("jobId")
+        .notEmpty()
+        .withMessage(MESSAGES.JOB_ID_INVALID)
+        .bail()
+        .isMongoId()
+        .withMessage(MESSAGES.JOB_ID_INVALID)
 ];

@@ -39,11 +39,19 @@ export const MESSAGES = Object.freeze({
     JOB_PUBLISHED: "Job published successfully",
     JOB_CLOSED: "Job closed successfully",
     JOB_DELETED: "Job deleted successfully",
+    JOB_APPLICATIONS_RETRIEVED: "Job applications retrieved successfully",
 
     // Application
     ALREADY_APPLIED: "You have already applied for this job",
     APPLICATION_NOT_FOUND: "Application not found",
     APPLICATION_SUBMITTED: "Application submitted successfully",
+    APPLICATIONS_RETRIEVED: "Applications retrieved successfully",
+    APPLICATION_ID_INVALID: "Invalid Application ID",
+    APPLICATION_STATUS_REQUIRED: "Application status is required",
+    APPLICATION_STATUS_INVALID: "Invalid application status",
+    APPLICATION_STATUS_TRANSITION_INVALID: "Invalid application status transition",
+    APPLICATION_STATUS_UPDATED: "Application status updated successfully",
+    CV_NOT_FOUND: "CV file not found",
 
     // Common
     UNAUTHORIZED: "Authentication is required",
@@ -55,9 +63,11 @@ export const MESSAGES = Object.freeze({
     FULL_NAME_LENGTH: "Full name must be between 2 and 100 characters",
     EMAIL_REQUIRED: "Email is required",
     EMAIL_INVALID: "Invalid email format",
+    EMAIL_ALREADY_EXISTS: "Email already exists",
     PASSWORD_REQUIRED: "Password is required",
     PASSWORD_LENGTH: "Password must be between 8 and 72 characters",
     PHONE_INVALID: "Invalid Vietnamese phone number",
+    ADDRESS_INVALID: "Invalid address",
     COMPANY_NAME_REQUIRED: "Company name is required",
     COMPANY_NAME_LENGTH: "Company name must not exceed 150 characters",
     WEBSITE_INVALID: "Invalid website URL",
@@ -117,8 +127,22 @@ export const MESSAGES = Object.freeze({
     CV_FORMAT_INVALID: "Only PDF, DOC and DOCX files are allowed",
     CV_SIZE_EXCEEDED: "CV file size must not exceed 5MB",
     CV_UPLOAD_INVALID: "Invalid CV upload",
-    FILE_UPLOAD_FAILED: "Failed to upload CV file"
+    FILE_UPLOAD_FAILED: "Failed to upload CV file",
 
+    PAGE_INVALID: "Page must be a positive integer",
+    LIMIT_INVALID: "Limit must be between 1 and 100",
+    APPLICATION_STATUS_INVALID: "Invalid application status",
 
+    USER_NOT_FOUND: "User not found",
+    PROFILE_RETRIEVED: "Profile retrieved successfully",
+    PROFILE_UPDATED: "Profile updated successfully",
+
+    CURRENT_PASSWORD_REQUIRED: "Current password is required",
+    CURRENT_PASSWORD_INVALID: "Current password is incorrect",
+    NEW_PASSWORD_REQUIRED: "New password is required",
+    CONFIRM_PASSWORD_REQUIRED: "Please confirm your new password",
+    PASSWORD_CONFIRMATION_INVALID: "Password confirmation does not match",
+    PASSWORD_SAME_AS_OLD: "New password must be different from current password",
+    PASSWORD_CHANGED: "Password changed successfully",
 
 });
