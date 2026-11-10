@@ -188,7 +188,7 @@ export const ManageJobs = () => {
                     <td className="px-6 py-4">
                       <Link
                         to={`/recruiter/jobs/${job._id}/applications`}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
                       >
                         <Users className="w-3 h-3" />
                         {job.applicationCount ?? "–"}
@@ -200,7 +200,7 @@ export const ManageJobs = () => {
                         {/* View Detail */}
                         <Link
                           to={`/recruiter/jobs/${job._id}/detail`}
-                          className="p-1.5 text-slate-500 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors"
+                          className="p-1.5 text-slate-500 hover:text-teal-700 rounded-lg hover:bg-teal-50 transition-colors"
                           title="View Detail"
                         >
                           <Eye className="w-4 h-4" />
@@ -210,7 +210,7 @@ export const ManageJobs = () => {
                         {job.status === JOB_STATUS.DRAFT && (
                           <Link
                             to={`/recruiter/jobs/${job._id}/edit`}
-                            className="p-1.5 text-slate-500 hover:text-indigo-600 rounded-lg hover:bg-slate-100 transition-colors"
+                            className="p-1.5 text-slate-500 hover:text-teal-700 rounded-lg hover:bg-slate-100 transition-colors"
                             title="Edit Job"
                           >
                             <Edit3 className="w-4 h-4" />

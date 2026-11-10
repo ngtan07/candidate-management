@@ -218,50 +218,62 @@ const getAllJobs = async (query) => {
         ];
     }
 
-    // Category filter
+    const parseMulti = val => Array.isArray(val) ? val : String(val).split(",").map(s => s.trim()).filter(Boolean);
+
+    // Multi-select or single category filter
     if (query.category) {
-        filter.category = query.category;
+        const cats = parseMulti(query.category);
+        if (cats.length === 1) filter.category = cats[0];
+        else if (cats.length > 1) filter.category = { $in: cats };
     }
 
-    // Employment type filter
+    // Multi-select or single employment type filter
     if (query.employmentType) {
-        filter.employmentType = query.employmentType;
+        const types = parseMulti(query.employmentType);
+        if (types.length === 1) filter.employmentType = types[0];
+        else if (types.length > 1) filter.employmentType = { $in: types };
     }
 
-    // Experience level filter
+    // Multi-select or single experience level filter
     if (query.experienceLevel) {
-        filter.experienceLevel = query.experienceLevel;
+        const levels = parseMulti(query.experienceLevel);
+        if (levels.length === 1) filter.experienceLevel = levels[0];
+        else if (levels.length > 1) filter.experienceLevel = { $in: levels };
     }
 
-    // Work location type filter
+    // Multi-select or single work location arrangement filter
     if (query.workLocationType) {
-        filter.workLocationType = query.workLocationType;
+        const arrangements = parseMulti(query.workLocationType);
+        if (arrangements.length === 1) filter.workLocationType = arrangements[0];
+        else if (arrangements.length > 1) filter.workLocationType = { $in: arrangements };
     }
 
-    // Salary min filter (jobs with salaryMax >= requested min)
-    if (query.salaryMin) {
-        const salaryMin = Number(query.salaryMin);
-        if (!isNaN(salaryMin)) {
-            filter.$and = filter.$and || [];
+    // Location keyword search if location specifically queried
+    if (query.location?.trim()) {
+        filter.location = { $regex: query.location.trim(), $options: "i" };
+    }
+
+    // Overlap salary range matching (No Salary Period filter)
+    const sMin = Number(query.salaryMin);
+    const sMax = Number(query.salaryMax);
+    const hasMin = !isNaN(sMin) && sMin > 0;
+    const hasMax = !isNaN(sMax) && sMax > 0;
+
+    if (hasMin || hasMax) {
+        filter.$and = filter.$and || [];
+        if (hasMin) {
             filter.$and.push({
                 $or: [
-                    { salaryMax: { $gte: salaryMin } },
-                    { salaryMin: { $gte: salaryMin } }
+                    { salaryMax: { $gte: sMin } },
+                    { $and: [{ salaryMax: null }, { salaryMin: { $gte: sMin } }] }
                 ]
             });
         }
-    }
-
-    // Salary max filter (jobs with salaryMin <= requested max)
-    if (query.salaryMax) {
-        const salaryMax = Number(query.salaryMax);
-        if (!isNaN(salaryMax)) {
-            filter.$and = filter.$and || [];
+        if (hasMax) {
             filter.$and.push({
                 $or: [
-                    { salaryMin: { $lte: salaryMax } },
-                    { salaryMax: null },
-                    { salaryMin: null }
+                    { salaryMin: { $lte: sMax } },
+                    { $and: [{ salaryMin: null }, { salaryMax: { $lte: sMax } }] }
                 ]
             });
         }

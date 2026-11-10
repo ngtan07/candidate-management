@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import applicationService from "../../services/applicationService";
+import CvActions from "../../components/common/CvActions";
 import PageHeader from "../../components/common/PageHeader";
 import StatusBadge from "../../components/common/StatusBadge";
 import Select from "../../components/common/Select";
@@ -213,7 +214,7 @@ export const MyApplications = () => {
                     <td className="px-6 py-4">
                       <Link
                         to={`/candidate/applications/${app._id}`}
-                        className="font-bold text-slate-900 hover:text-indigo-600 transition-colors block"
+                        className="font-bold text-slate-900 hover:text-teal-700 transition-colors block"
                       >
                         {app.jobId?.title || "Job Posting"}
                       </Link>
@@ -230,25 +231,7 @@ export const MyApplications = () => {
                     </td>
 
                     <td className="px-6 py-4 text-xs whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleViewCv(app._id, app.cv?.fileName)}
-                          className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-semibold"
-                          title="View CV"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          View
-                        </button>
-                        <span className="text-slate-300">|</span>
-                        <button
-                          onClick={() => handleDownloadCv(app._id, app.cv?.fileName)}
-                          className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-700"
-                          title="Download CV"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          Download
-                        </button>
-                      </div>
+                      <CvActions applicationId={app._id} fileName={app.cv?.fileName} />
                       <span className="text-[11px] text-slate-400 block mt-0.5 truncate max-w-[130px]">
                         {app.cv?.fileName || "CV File"}
                       </span>
@@ -269,7 +252,7 @@ export const MyApplications = () => {
                     <td className="px-6 py-4 text-right whitespace-nowrap">
                       <Link
                         to={`/candidate/applications/${app._id}`}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 hover:text-teal-900"
                       >
                         View Detail
                         <ArrowRight className="w-3.5 h-3.5" />

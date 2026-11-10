@@ -1,0 +1,13 @@
+import React, { useEffect, useState } from "react";
+import PageHeader from "../../components/common/PageHeader";
+import Button from "../../components/common/Button";
+import interviewService from "../../services/interviewService";
+
+export default function InterviewSchedule() {
+  const [items, setItems] = useState([]); const [err, setErr] = useState(""); const [week, setWeek] = useState(() => { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d; });
+  const load = async () => { const from = new Date(week); const to = new Date(week); to.setDate(to.getDate() + 7); try { const res = await interviewService.list({ from: from.toISOString(), to: to.toISOString() }); setItems(res.data || []); setErr(""); } catch (e) { setErr(e.message); } };
+  useEffect(() => { load(); }, [week]);
+  const shift = amount => setWeek(d => { const n = new Date(d); n.setDate(n.getDate() + amount * 7); return n; });
+  return <div className="space-y-5"><PageHeader title="Interview schedule" subtitle="Review scheduled interviews for this week." /><div className="flex gap-2"><Button variant="secondary" onClick={() => shift(-1)}>Previous week</Button><Button variant="secondary" onClick={() => shift(1)}>Next week</Button></div>{err && <p role="alert" className="text-red-600">{err}</p>}<div className="bg-white rounded-xl border divide-y">{items.length ? items.map(item => <article key={item._id} className="p-4"><div className="font-semibold text-slate-900">{item.applicationId?.applicantName} · {item.applicationId?.jobId?.title}</div><p className="text-sm text-slate-600">{new Date(item.startTime).toLocaleString()} – {new Date(item.endTime).toLocaleTimeString()} · {item.interviewType}</p><p className="text-sm text-slate-500">{item.meetingUrl || item.officeAddress}</p><details className="mt-3"><summary className="cursor-pointer text-indigo-700 text-sm">Interview notes</summary><Notes interview={item} reload={load} /></details></article>) : <p className="p-6 text-slate-500">No interviews scheduled this week.</p>}</div></div>;
+}
+function Notes({ interview, reload }) { const [value, setValue] = useState(interview.notes || ""); const [busy, setBusy] = useState(false); const save = async () => { setBusy(true); try { await interviewService.notes(interview._id, value); await reload(); } catch (e) { window.alert(e.message); } finally { setBusy(false); } }; return <div className="mt-2 space-y-2"><textarea className="w-full border rounded-lg p-2 text-sm" rows="4" value={value} onChange={e => setValue(e.target.value)} /><Button size="sm" loading={busy} onClick={save}>Save notes</Button></div>; }

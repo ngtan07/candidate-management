@@ -13,6 +13,8 @@ import AdminLayout from "../layouts/AdminLayout";
 import Login from "../pages/auth/Login";
 import RegisterCandidate from "../pages/auth/RegisterCandidate";
 import RegisterRecruiter from "../pages/auth/RegisterRecruiter";
+import ForgotPassword from "../pages/auth/ForgotPassword";
+import ResetPassword from "../pages/auth/ResetPassword";
 
 // Candidate & Public Pages
 import BrowseJobs from "../pages/candidate/BrowseJobs";
@@ -27,9 +29,11 @@ import ManageJobs from "../pages/recruiter/ManageJobs";
 import JobForm from "../pages/recruiter/JobForm";
 import JobApplications from "../pages/recruiter/JobApplications";
 import RecruiterJobDetail from "../pages/recruiter/RecruiterJobDetail";
+import InterviewEvaluation from "../pages/recruiter/InterviewEvaluation";
 
 // Admin & Fallback
-import AdminDashboard from "../pages/admin/AdminDashboard";
+import ManageRecruiters from "../pages/admin/ManageRecruiters";
+import ManageJobsAdmin from "../pages/admin/ManageJobs";
 import NotFound from "../pages/NotFound";
 
 import { ROLE } from "../utils/constants";
@@ -82,7 +86,9 @@ export const AppRoutes = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register/candidate" element={<RegisterCandidate />} />
         <Route path="/register/recruiter" element={<RegisterRecruiter />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Route>
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Public Job Browsing — uses CandidateLayout for candidates, still accessible without auth */}
       <Route path="/jobs" element={<CandidateLayout />}>
@@ -124,6 +130,9 @@ export const AppRoutes = () => {
         <Route path="jobs/:id/edit" element={<JobForm />} />
         <Route path="jobs/:id/detail" element={<RecruiterJobDetail />} />
         <Route path="jobs/:id/applications" element={<JobApplications />} />
+        <Route path="applications/:id" element={<ApplicationDetails />} />
+        <Route path="applications/:id/evaluate" element={<InterviewEvaluation />} />
+        <Route path="interviews" element={<Navigate to="/recruiter/jobs" replace />} />
       </Route>
 
       {/* Admin Portal */}
@@ -135,7 +144,9 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         }
       >
-        <Route index element={<AdminDashboard />} />
+        <Route index element={<Navigate to="recruiters" replace />} />
+        <Route path="recruiters" element={<ManageRecruiters />} />
+        <Route path="jobs" element={<ManageJobsAdmin />} />
       </Route>
 
       {/* 404 Not Found */}

@@ -15,13 +15,16 @@ api.interceptors.response.use(
   (response) => {
     return response.data;
   },
-  (error) => {
+  async (error) => {
     // Extract server message or fallback
     let message = "An unexpected error occurred. Please try again.";
     let validationErrors = null;
 
     if (error.response) {
-      const data = error.response.data;
+      let data = error.response.data;
+      if (data instanceof Blob) {
+        try { data = JSON.parse(await data.text()); } catch { data = null; }
+      }
       if (data) {
         if (data.message) {
           message = data.message;

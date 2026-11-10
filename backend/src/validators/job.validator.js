@@ -220,25 +220,33 @@ export const validateGetAllJobs = [
         .optional()
         .trim(),
 
-    query("category")
-        .optional()
-        .isIn(Object.values(JOB_CATEGORY))
-        .withMessage(MESSAGES.JOB_CATEGORY_INVALID),
+    query("category").optional().custom(val => {
+        const items = Array.isArray(val) ? val : String(val).split(",").map(s => s.trim()).filter(Boolean);
+        const valid = Object.values(JOB_CATEGORY);
+        if (!items.every(i => valid.includes(i))) throw new Error(MESSAGES.JOB_CATEGORY_INVALID);
+        return true;
+    }),
 
-    query("employmentType")
-        .optional()
-        .isIn(Object.values(EMPLOYMENT_TYPE))
-        .withMessage(MESSAGES.EMPLOYMENT_TYPE_INVALID),
+    query("employmentType").optional().custom(val => {
+        const items = Array.isArray(val) ? val : String(val).split(",").map(s => s.trim()).filter(Boolean);
+        const valid = Object.values(EMPLOYMENT_TYPE);
+        if (!items.every(i => valid.includes(i))) throw new Error(MESSAGES.EMPLOYMENT_TYPE_INVALID);
+        return true;
+    }),
 
-    query("experienceLevel")
-        .optional()
-        .isIn(Object.values(EXPERIENCE_LEVEL))
-        .withMessage(MESSAGES.EXPERIENCE_LEVEL_INVALID),
+    query("experienceLevel").optional().custom(val => {
+        const items = Array.isArray(val) ? val : String(val).split(",").map(s => s.trim()).filter(Boolean);
+        const valid = Object.values(EXPERIENCE_LEVEL);
+        if (!items.every(i => valid.includes(i))) throw new Error(MESSAGES.EXPERIENCE_LEVEL_INVALID);
+        return true;
+    }),
 
-    query("workLocationType")
-        .optional()
-        .isIn(Object.values(WORK_LOCATION_TYPE))
-        .withMessage(MESSAGES.WORK_LOCATION_TYPE_INVALID),
+    query("workLocationType").optional().custom(val => {
+        const items = Array.isArray(val) ? val : String(val).split(",").map(s => s.trim()).filter(Boolean);
+        const valid = Object.values(WORK_LOCATION_TYPE);
+        if (!items.every(i => valid.includes(i))) throw new Error(MESSAGES.WORK_LOCATION_TYPE_INVALID);
+        return true;
+    }),
 
     query("salaryMin")
         .optional()
@@ -248,7 +256,17 @@ export const validateGetAllJobs = [
     query("salaryMax")
         .optional()
         .isFloat({ min: 0 })
-        .withMessage(MESSAGES.SALARY_MAX_INVALID)
+        .withMessage(MESSAGES.SALARY_MAX_INVALID),
+
+    query("salaryCurrency")
+        .optional()
+        .isIn(Object.values(SALARY_CURRENCY))
+        .withMessage(MESSAGES.SALARY_CURRENCY_INVALID),
+
+    query("salaryPeriod")
+        .optional()
+        .isIn(Object.values(SALARY_PERIOD))
+        .withMessage(MESSAGES.SALARY_PERIOD_INVALID)
 ];
 
 export const validateGetJobById = [

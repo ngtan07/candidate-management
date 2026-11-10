@@ -3,6 +3,7 @@ import { MESSAGES } from "../constants/message.js";
 import Application from "../models/Application.js";
 import applicationService from "../services/application.service.js";
 import AppError from "../utils/AppError.js";
+import { Readable } from "node:stream";
 
 const applyForJob = async (req, res, next) => {
 
@@ -141,13 +142,32 @@ const getApplicationCv = async (req, res, next) => {
         const result = await applicationService.getApplicationCv(
             req.user.id,
             req.user.role,
-            req.params.applicationId
+            req.params.applicationId,
+            req.query.disposition === "attachment" ? "attachment" : "inline"
         );
-
-        return res.status(200).json({
-            success: true,
-            data: result
-        });
+        let upstream;
+        try {
+            upstream = await fetch(result.url);
+            if (!upstream.ok && upstream.status === 404 && result.fallbackUrl) {
+                const fallbackRes = await fetch(result.fallbackUrl);
+                if (fallbackRes.ok) upstream = fallbackRes;
+            }
+        } catch {
+            throw new AppError("CV storage is temporarily unavailable.", 502);
+        }
+        if (!upstream.ok || !upstream.body) {
+            throw new AppError(upstream.status === 404 ? MESSAGES.CV_NOT_FOUND : "Stored CV could not be retrieved.", upstream.status === 404 ? 404 : 502);
+        }
+        if ((upstream.headers.get("content-type") || "").toLowerCase().includes("text/html")) {
+            throw new AppError("Stored CV provider returned an invalid file response.", 502);
+        }
+        res.status(200);
+        res.setHeader("Content-Type", result.contentType);
+        res.setHeader("X-Content-Type-Options", "nosniff");
+        res.setHeader("Content-Disposition", `${result.disposition}; filename*=UTF-8''${encodeURIComponent(result.fileName).replaceAll("'", "%27")}`);
+        if (upstream.headers.get("content-length")) res.setHeader("Content-Length", upstream.headers.get("content-length"));
+        res.setHeader("Cache-Control", "private, no-store");
+        Readable.fromWeb(upstream.body).on("error", error => { console.error("CV stream failed:", error.message); res.destroy(error); }).pipe(res);
     } catch (error) {
         next(error);
     }

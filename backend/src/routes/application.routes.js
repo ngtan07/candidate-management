@@ -1,4 +1,5 @@
 import express from "express";
+import { query } from "express-validator";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import { parseApplicationFormData, uploadCvToCloudinary } from "../middlewares/upload.middleware.js";
 import { validateApplyJob, validateGetApplicationById, validateGetApplicationsByJob, validateGetMyApplications, validateUpdateApplicationStatus } from "../validators/application.validator.js";
@@ -53,6 +54,9 @@ router.patch("/:applicationId/status",
 router.get("/:applicationId/cv",
     authMiddleware.protect,
     authMiddleware.authorize(ROLE.RECRUITER, ROLE.CANDIDATE),
+    validateGetApplicationById,
+    query("disposition").optional().isIn(["inline", "attachment"]),
+    validateRequest,
     applicationController.getApplicationCv
 );
 

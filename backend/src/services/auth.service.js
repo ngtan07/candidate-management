@@ -4,6 +4,10 @@ import { REGISTRATION_STATUS } from "../constants/registrationStatus.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
 import { MESSAGES } from "../constants/message.js";
 import AppError from "../utils/AppError.js";
+import crypto from "node:crypto";
+import PasswordResetToken from "../models/PasswordResetToken.js";
+import emailService from "./email.service.js";
+import env from "../config/env.js";
 
 // Candidate registration
 const registerCandidate = async (data) => {
@@ -130,9 +134,42 @@ const handleDuplicateEmail = (error) => {
     throw error;
 };
 
+const requestPasswordReset = async (email) => {
+    const user = await User.findOne({ email: normalizeEmail(email) });
+    if (!user) return;
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    await PasswordResetToken.findOneAndUpdate(
+        { userId: user._id },
+        { tokenHash: crypto.createHash("sha256").update(rawToken).digest("hex"), expiresAt: new Date(Date.now() + 60 * 60 * 1000), usedAt: null },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    const link = `${env.CLIENT_URL}/reset-password?token=${encodeURIComponent(rawToken)}`;
+    try {
+        await emailService.sendEmail({ to: user.email, subject: "Reset your TalentPulse password", text: `Use this link within one hour: ${link}`, html: `<p>Reset your password within one hour.</p><p><a href="${link}">Reset password</a></p>` });
+    } catch (error) {
+        console.error("Password reset email delivery failed:", error.message);
+    }
+};
+
+const resetPassword = async (rawToken, password) => {
+    const tokenHash = crypto.createHash("sha256").update(rawToken || "").digest("hex");
+    const reset = await PasswordResetToken.findOneAndUpdate(
+        { tokenHash, usedAt: null, expiresAt: { $gt: new Date() } },
+        { $set: { usedAt: new Date(), tokenHash: crypto.randomBytes(32).toString("hex") } },
+        { new: true }
+    );
+    if (!reset) throw new AppError("This password reset link is invalid or expired.", 400);
+    const user = await User.findById(reset.userId);
+    if (!user) throw new AppError("This password reset link is invalid or expired.", 400);
+    user.passwordHash = await hashPassword(password);
+    await user.save();
+};
+
 export default {
     registerCandidate,
     registerRecruiter,
     login,
-    getCurrentUser
+    getCurrentUser,
+    requestPasswordReset,
+    resetPassword
 }

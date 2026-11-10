@@ -11,11 +11,17 @@ import authRoutes from "./routes/auth.routes.js";
 import jobRoutes from "./routes/job.routes.js";
 import applicationRoutes from "./routes/application.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import interviewRoutes from "./routes/interview.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 
 const app = express();
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: { "frame-src": ["'self'", "blob:"] }
+    }
+}));
 
 // CORS configuration
 app.use(cors({
@@ -47,6 +53,8 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes)
 app.use("/api/jobs", jobRoutes)
 app.use("/api/applications", applicationRoutes);
+app.use("/api/interviews", interviewRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api", userRoutes);
 
 

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import applicationService from "../../services/applicationService";
+import CvActions from "../../components/common/CvActions";
+import interviewService from "../../services/interviewService";
 import PageHeader from "../../components/common/PageHeader";
 import StatusBadge from "../../components/common/StatusBadge";
 import Select from "../../components/common/Select";
@@ -43,6 +45,12 @@ export const JobApplications = () => {
   // Search & Filter
   const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [statusCounts, setStatusCounts] = useState({});
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduleBusy, setScheduleBusy] = useState(false);
+  const [scheduleError, setScheduleError] = useState("");
+  const [scheduleForm, setScheduleForm] = useState({ date: "", start: "", end: "", interviewType: "ONLINE", meetingUrl: "", officeAddress: "", notes: "" });
 
   // Inline action state
   const [updatingId, setUpdatingId] = useState(null);
@@ -82,6 +90,7 @@ export const JobApplications = () => {
       if (res?.data) {
         setJobInfo(res.data.job || null);
         setApplications(res.data.applications || []);
+        setStatusCounts(res.data.statusCounts || {});
         setPaginationData(res.data.pagination);
       }
     } catch (err) {
@@ -90,6 +99,8 @@ export const JobApplications = () => {
       setLoading(false);
     }
   }, [jobId, page, limit, statusFilter, searchInput, setPaginationData]);
+
+  useEffect(() => { setSelectedIds([]); }, [jobId, statusFilter, page, searchInput]);
 
   useEffect(() => {
     fetchApplications();
@@ -160,11 +171,29 @@ export const JobApplications = () => {
     }
   };
 
+  const toggleSelected = (id) => setSelectedIds(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id]);
+  const selectAllVisible = (checked) => setSelectedIds(checked ? applications.filter(app => app.status === APPLICATION_STATUS.PASSED_CV).map(app => app._id) : []);
+  const submitSchedule = async (event) => {
+    event.preventDefault(); setScheduleError(""); setScheduleBusy(true);
+    const localDateTime = time => new Date(`${scheduleForm.date}T${time}`).toISOString();
+    const sharedInterview = { startTime: localDateTime(scheduleForm.start), endTime: localDateTime(scheduleForm.end), interviewType: scheduleForm.interviewType, meetingUrl: scheduleForm.interviewType === "ONLINE" ? scheduleForm.meetingUrl : undefined, officeAddress: scheduleForm.interviewType === "ONSITE" ? scheduleForm.officeAddress : undefined, notes: scheduleForm.notes || undefined };
+    try {
+      const result = await interviewService.bulkSchedule(selectedIds, sharedInterview);
+      const scheduled = result.data?.scheduled || []; const failed = result.data?.failed || [];
+      if (scheduled.length) toast.success(`Scheduled ${scheduled.length} candidate${scheduled.length === 1 ? "" : "s"}.`);
+      if (failed.length) { const labels = failed.map(f => applications.find(app => app._id === f.applicationId)?.applicantName || f.applicationId); setScheduleError(`${scheduled.length} scheduled; ${failed.length} failed: ${labels.join(", ")}. ${failed.map(f => f.message).join("; ")}`); }
+      setSelectedIds(failed.map(item => item.applicationId));
+      if (!failed.length) setScheduleOpen(false);
+      await fetchApplications();
+    } catch (err) { setScheduleError(err.message || "Scheduling failed."); }
+    finally { setScheduleBusy(false); }
+  };
+
   // Only APPLIED, PASSED_CV, REJECTED_CV are supported in this simplified screening scope
   const filterOptions = [
-    { value: APPLICATION_STATUS.APPLIED, label: "Applied" },
-    { value: APPLICATION_STATUS.PASSED_CV, label: "Accepted CV" },
     { value: APPLICATION_STATUS.REJECTED_CV, label: "Rejected CV" },
+    { value: APPLICATION_STATUS.REJECTED_INTERVIEW, label: "Rejected Interview" },
+    { value: APPLICATION_STATUS.INTERVIEWED, label: "Interviewed" },
   ];
 
   const isPdf = cvModal.fileName?.toLowerCase().endsWith(".pdf");
@@ -185,6 +214,45 @@ export const JobApplications = () => {
         title={jobInfo?.title ? `Applicants: ${jobInfo.title}` : "Job Applicants"}
         subtitle="Review applicant profiles, preview attached CVs, and screen applications."
       />
+
+      <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-2" role="tablist" aria-label="Application stages">
+        <button
+          role="tab"
+          aria-selected={statusFilter === ""}
+          type="button"
+          onClick={() => { setStatusFilter(""); goToPage(1); }}
+          className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${statusFilter === "" ? "bg-teal-700 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
+            }`}
+        >
+          All
+          <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-slate-200/60 text-current">
+            {statusCounts.ALL !== undefined ? statusCounts.ALL : total}
+          </span>
+        </button>
+
+        {[
+          [APPLICATION_STATUS.APPLIED, "Pending"],
+          [APPLICATION_STATUS.PASSED_CV, "Passed CV"],
+          [APPLICATION_STATUS.WAITING_INTERVIEW, "Waiting Interview"],
+          [APPLICATION_STATUS.INTERVIEWED, "Waiting Result"],
+          [APPLICATION_STATUS.PASSED, "Passed"],
+        ].map(([value, label]) => (
+          <button
+            role="tab"
+            aria-selected={statusFilter === value}
+            key={value}
+            type="button"
+            onClick={() => { setStatusFilter(value); goToPage(1); }}
+            className={`px-3.5 py-2 rounded-lg text-sm font-semibold transition-all ${statusFilter === value ? "bg-teal-700 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
+              }`}
+          >
+            {label}
+            <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-slate-200/60 text-current">
+              {statusCounts[value] || 0}
+            </span>
+          </button>
+        ))}
+      </div>
 
       {/* Search & Filter Bar Directly Above Table */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center gap-3">
@@ -212,17 +280,20 @@ export const JobApplications = () => {
         </form>
 
         <div className="w-full sm:w-56 shrink-0">
-          <Select
-            placeholder="All Statuses"
-            options={filterOptions}
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              goToPage(1);
-            }}
-          />
+          <Select placeholder="Other statuses" options={filterOptions} value={filterOptions.some(option => option.value === statusFilter) ? statusFilter : ""} onChange={(e) => { setStatusFilter(e.target.value); goToPage(1); }} />
         </div>
       </div>
+
+      {statusFilter === APPLICATION_STATUS.PASSED_CV && selectedIds.length > 0 && (
+        <div className="flex justify-between items-center rounded-xl bg-teal-50 border border-teal-200 p-3">
+          <p className="text-sm text-teal-900 font-medium">
+            {selectedIds.length} candidate{selectedIds.length === 1 ? "" : "s"} selected
+          </p>
+          <Button onClick={() => { setScheduleForm({ date: "", start: "", end: "", interviewType: "ONLINE", meetingUrl: "", officeAddress: "", notes: "" }); setScheduleError(""); setScheduleOpen(true); }}>
+            Set Scheduler Interview
+          </Button>
+        </div>
+      )}
 
       {loading ? (
         <div className="py-24 bg-white rounded-2xl border border-slate-200">
@@ -251,23 +322,29 @@ export const JobApplications = () => {
             <table className="w-full text-left text-sm text-slate-600">
               <thead className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 <tr>
+                  {statusFilter === APPLICATION_STATUS.PASSED_CV && <th className="px-4 py-4"><input type="checkbox" aria-label="Select all eligible applicants on this page" checked={applications.filter(a => a.status === APPLICATION_STATUS.PASSED_CV).length > 0 && applications.filter(a => a.status === APPLICATION_STATUS.PASSED_CV).every(a => selectedIds.includes(a._id))} onChange={e => selectAllVisible(e.target.checked)} /></th>}
                   <th scope="col" className="px-6 py-4">Applicant</th>
                   <th scope="col" className="px-6 py-4">Contact Info</th>
                   <th scope="col" className="px-6 py-4">Attached CV</th>
                   <th scope="col" className="px-6 py-4">Applied Date</th>
                   {/* Combined Status & Action column (no separate Actions column) */}
-                  <th scope="col" className="px-6 py-4 text-center">Status</th>
+                  <th scope="col" className="px-6 py-4 text-center">Status / Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
                 {applications.map((app) => {
                   const isApplied = app.status === APPLICATION_STATUS.APPLIED;
+                  const isPassedCv = app.status === APPLICATION_STATUS.PASSED_CV;
+                  const isWaitingInterview = app.status === APPLICATION_STATUS.WAITING_INTERVIEW;
+                  const isInterviewed = app.status === APPLICATION_STATUS.INTERVIEWED;
                   const isUpdating = updatingId === app._id;
 
                   return (
                     <tr key={app._id} className="hover:bg-slate-50/80 transition-colors">
+                      {statusFilter === APPLICATION_STATUS.PASSED_CV && <td className="px-4 py-4"><input type="checkbox" aria-label={`Select ${app.applicantName}`} checked={selectedIds.includes(app._id)} disabled={!isPassedCv} onChange={() => toggleSelected(app._id)} /></td>}
                       <td className="px-6 py-4 font-bold text-slate-900">
-                        {app.applicantName}
+                        <Link className="hover:text-teal-700" to={`/recruiter/applications/${app._id}`}>{app.applicantName}</Link>
+                        {app.interview && <p className="mt-1 text-xs font-normal text-slate-500">{new Date(app.interview.startTime).toLocaleString()} · {app.interview.interviewType}</p>}
                       </td>
 
                       <td className="px-6 py-4 text-xs space-y-1">
@@ -284,25 +361,7 @@ export const JobApplications = () => {
                       </td>
 
                       <td className="px-6 py-4 text-xs whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleViewCv(app._id, app.cv?.fileName)}
-                            className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-semibold"
-                            title="Preview CV"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            View CV
-                          </button>
-                          <span className="text-slate-300">|</span>
-                          <button
-                            onClick={() => handleDownloadCv(app._id, app.cv?.fileName)}
-                            className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-700"
-                            title="Download CV"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                            Download
-                          </button>
-                        </div>
+                        <CvActions applicationId={app._id} fileName={app.cv?.fileName} />
                         <span className="text-[11px] text-slate-400 block mt-0.5 truncate max-w-[150px]">
                           {app.cv?.fileName}
                         </span>
@@ -352,8 +411,64 @@ export const JobApplications = () => {
                               Reject CV
                             </button>
                           </div>
+                        ) : isPassedCv ? (
+                          <button
+                            type="button"
+                            onClick={() => { setSelectedIds([app._id]); setScheduleForm({ date: "", start: "", end: "", interviewType: "ONLINE", meetingUrl: "", officeAddress: "", notes: "" }); setScheduleError(""); setScheduleOpen(true); }}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200 transition-colors"
+                          >
+                            Set Scheduler Interview
+                          </button>
+                        ) : isWaitingInterview ? (
+                          <div className="inline-flex items-center gap-2">
+                            <StatusBadge status={app.status} type="application" />
+                            <Link
+                              to={`/recruiter/applications/${app._id}/evaluate`}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white shadow-sm transition-colors"
+                            >
+                              Interview
+                            </Link>
+                          </div>
+                        ) : isInterviewed ? (
+                          <div className="inline-flex items-center gap-2">
+                            <Link
+                              to={`/recruiter/applications/${app._id}/evaluate`}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-teal-700 hover:bg-slate-100 border border-slate-200 transition-colors"
+                              title="View Interview Detail"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Link>
+                            <button
+                              disabled={isUpdating}
+                              onClick={() => handleStatusTransition(app, APPLICATION_STATUS.PASSED)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors disabled:opacity-50"
+                              title="Accept Candidate"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              Accept
+                            </button>
+                            <button
+                              disabled={isUpdating}
+                              onClick={() => handleStatusTransition(app, APPLICATION_STATUS.REJECTED_INTERVIEW)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-colors disabled:opacity-50"
+                              title="Reject Candidate"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              Reject
+                            </button>
+                          </div>
                         ) : (
-                          <StatusBadge status={app.status} type="application" />
+                          <div className="inline-flex items-center gap-2">
+                            <StatusBadge status={app.status} type="application" />
+                            {(app.status === APPLICATION_STATUS.PASSED || app.status === APPLICATION_STATUS.REJECTED_INTERVIEW) && (
+                              <Link
+                                to={`/recruiter/applications/${app._id}/evaluate`}
+                                className="text-xs text-slate-500 hover:text-teal-700 underline font-medium"
+                              >
+                                Evaluation
+                              </Link>
+                            )}
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -426,7 +541,7 @@ export const JobApplications = () => {
                   href={cvModal.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 font-semibold text-indigo-600 hover:text-indigo-800"
+                  className="inline-flex items-center gap-1.5 font-semibold text-teal-600 hover:text-teal-800"
                 >
                   <Download className="w-3.5 h-3.5" />
                   Direct Download
@@ -454,7 +569,7 @@ export const JobApplications = () => {
                     href={cvModal.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 shadow-sm"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 shadow-sm"
                   >
                     <Download className="w-4 h-4" />
                     Download File
@@ -464,6 +579,17 @@ export const JobApplications = () => {
             </div>
           )}
         </div>
+      </Modal>
+      <Modal isOpen={scheduleOpen} onClose={() => !scheduleBusy && setScheduleOpen(false)} title="Set Scheduler Interview" maxWidth="max-w-2xl">
+        <form onSubmit={submitSchedule} className="space-y-4">
+          <p className="text-sm text-slate-600">Scheduling {selectedIds.length} candidate{selectedIds.length === 1 ? "" : "s"} for <strong>{jobInfo?.title}</strong>. Each candidate will receive an individual interview record.</p>
+          {scheduleError && <p role="alert" className="p-3 rounded-lg bg-red-50 text-red-700 text-sm">{scheduleError}</p>}
+          <div className="grid sm:grid-cols-3 gap-3"><Input label="Interview date" type="date" required value={scheduleForm.date} onChange={e => setScheduleForm({ ...scheduleForm, date: e.target.value })} /><Input label="Start time" type="time" required value={scheduleForm.start} onChange={e => setScheduleForm({ ...scheduleForm, start: e.target.value })} /><Input label="End time" type="time" required value={scheduleForm.end} onChange={e => setScheduleForm({ ...scheduleForm, end: e.target.value })} /></div>
+          <Select label="Interview format" options={[{ value: "ONLINE", label: "Online" }, { value: "ONSITE", label: "Offline" }]} value={scheduleForm.interviewType} onChange={e => setScheduleForm({ ...scheduleForm, interviewType: e.target.value })} />
+          {scheduleForm.interviewType === "ONLINE" ? <Input label="Meeting URL" type="url" required placeholder="https://meet.google.com/..." value={scheduleForm.meetingUrl} onChange={e => setScheduleForm({ ...scheduleForm, meetingUrl: e.target.value })} /> : <Input label="Office / interview address" required value={scheduleForm.officeAddress} onChange={e => setScheduleForm({ ...scheduleForm, officeAddress: e.target.value })} />}
+          <div><label htmlFor="schedule-notes" className="block text-sm font-medium text-slate-700 mb-1">Instructions or private notes (optional)</label><textarea id="schedule-notes" rows="3" className="w-full border rounded-lg p-3 text-sm" value={scheduleForm.notes} onChange={e => setScheduleForm({ ...scheduleForm, notes: e.target.value })} /></div>
+          <div className="flex justify-end gap-2"><Button type="button" variant="secondary" disabled={scheduleBusy} onClick={() => setScheduleOpen(false)}>Cancel</Button><Button type="submit" loading={scheduleBusy} disabled={!selectedIds.length}>Schedule {selectedIds.length} candidate{selectedIds.length === 1 ? "" : "s"}</Button></div>
+        </form>
       </Modal>
     </div>
   );

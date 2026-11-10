@@ -73,9 +73,21 @@ const logout = (req, res) => {
     });
 }
 
+const requestPasswordReset = async (req, res) => {
+    await authService.requestPasswordReset(req.body.email);
+    res.status(202).json({ success: true, message: "If the account exists, reset instructions are being processed. If they do not arrive, contact support." });
+};
+
+const resetPassword = async (req, res) => {
+    await authService.resetPassword(req.body.token, req.body.password);
+    res.status(200).json({ success: true, message: "Password reset successfully." });
+};
+
 export default {
     registerCandidate,
     registerRecruiter,
     login,
-    logout
+    logout,
+    requestPasswordReset,
+    resetPassword
 };

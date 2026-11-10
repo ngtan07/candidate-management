@@ -31,8 +31,19 @@ export const applicationService = {
   },
 
   // Recruiter view / download CV
-  getApplicationCv: async (applicationId) => {
-    return await api.get(`/applications/${applicationId}/cv`);
+  getApplicationCv: async (applicationId, disposition = "inline") => {
+    return await api.get(`/applications/${applicationId}/cv`, { params: { disposition }, responseType: "blob" });
+  },
+  downloadCv: async (applicationId, fileName) => {
+    const blob = await applicationService.getApplicationCv(applicationId, "attachment");
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url; link.download = fileName || "candidate-cv"; document.body.appendChild(link); link.click(); link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
+  previewCv: async (applicationId) => {
+    const blob = await applicationService.getApplicationCv(applicationId, "inline");
+    return URL.createObjectURL(blob);
   }
 };
 

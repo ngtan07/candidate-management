@@ -361,7 +361,7 @@ export const JobForm = () => {
               className={`w-full rounded-xl border text-sm p-4 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 ${
                 errors.description
                   ? "border-red-300 focus:border-red-500 focus:ring-red-100"
-                  : "border-slate-300 focus:border-indigo-500 focus:ring-indigo-100"
+                  : "border-slate-300 focus:border-teal-600 focus:ring-teal-100"
               }`}
               placeholder="Outline responsibilities, required skills, qualifications, benefits..."
               value={formData.description}

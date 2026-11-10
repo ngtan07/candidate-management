@@ -8,6 +8,7 @@ import User from "../models/User.js";
 import { REGISTRATION_STATUS } from "../constants/registrationStatus.js";
 import { ROLE } from "../constants/role.js";
 import cloudinary from "../config/cloudinary.js";
+import Interview from "../models/Interview.js";
 
 const applyForJob = async (jobId, candidateId, applicationData, cvData) => {
 
@@ -161,6 +162,18 @@ const getApplicationById = async (applicationId, userId, userRole) => {
         throw new AppError(MESSAGES.FORBIDDEN, 403);
     }
 
+    if (userRole === ROLE.CANDIDATE) {
+        const interview = await Interview.findOne({ applicationId }).lean();
+        if (interview) {
+            const { notes, ...candidateInterview } = interview;
+            application.interview = candidateInterview;
+        } else {
+            application.interview = null;
+        }
+    } else if (userRole === ROLE.RECRUITER) {
+        application.interview = await Interview.findOne({ applicationId }).lean();
+    }
+
     return application;
 };
 
@@ -205,7 +218,7 @@ const getApplicationsByJob = async (recruiterId, jobId, query) => {
         ];
     }
 
-    const [applications, total] = await Promise.all([
+    const [applications, total, groupedCounts] = await Promise.all([
         Application.find(filter)
             .select(
                 "candidateId applicantName applicantEmail applicantPhone cv.fileName status statusUpdatedAt createdAt"
@@ -215,15 +228,24 @@ const getApplicationsByJob = async (recruiterId, jobId, query) => {
             .limit(limit)
             .lean(),
 
-        Application.countDocuments(filter)
+        Application.countDocuments(filter),
+        Application.aggregate([{ $match: { jobId: job._id } }, { $group: { _id: "$status", count: { $sum: 1 } } }])
     ]);
+
+    const interviewRecords = await Interview.find({ applicationId: { $in: applications.map(item => item._id) } }).select("applicationId startTime endTime interviewType meetingUrl officeAddress").lean();
+    const interviewByApplication = new Map(interviewRecords.map(item => [item.applicationId.toString(), item]));
 
     return {
         job: {
             _id: job._id,
             title: job.title
         },
-        applications,
+        applications: applications.map(item => ({ ...item, interview: interviewByApplication.get(item._id.toString()) || null })),
+        statusCounts: (() => {
+            const map = groupedCounts.reduce((acc, item) => ({ ...acc, [item._id]: item.count }), {});
+            const allCount = Object.values(map).reduce((sum, c) => sum + c, 0);
+            return { ...map, ALL: allCount };
+        })(),
         pagination: {
             page,
             limit,
@@ -311,7 +333,7 @@ const updateApplicationStatus = async (recruiterId, applicationId, newStatus) =>
     };
 };
 
-const getApplicationCv = async (userId, userRole, applicationId) => {
+const getApplicationCv = async (userId, userRole, applicationId, disposition = "inline") => {
     const application = await Application.findById(applicationId)
         .populate({
             path: "jobId",
@@ -327,12 +349,14 @@ const getApplicationCv = async (userId, userRole, applicationId) => {
             throw new AppError(MESSAGES.APPLICATION_NOT_FOUND, 404);
         }
     } else if (userRole === ROLE.RECRUITER) {
-        if (
-            application.jobId.recruiterId.toString() !== userId.toString()
-        ) {
+        const recruiter = await User.findById(userId).select("role isActive registrationStatus");
+        if (!recruiter || recruiter.role !== ROLE.RECRUITER || !recruiter.isActive || recruiter.registrationStatus !== REGISTRATION_STATUS.APPROVED) {
+            throw new AppError(MESSAGES.FORBIDDEN, 403);
+        }
+        if (application.jobId.recruiterId.toString() !== userId.toString()) {
             throw new AppError(MESSAGES.APPLICATION_NOT_FOUND, 404);
         }
-    } else {
+    } else if (userRole !== ROLE.ADMIN) {
         throw new AppError(MESSAGES.FORBIDDEN, 403);
     }
 
@@ -340,27 +364,48 @@ const getApplicationCv = async (userId, userRole, applicationId) => {
         throw new AppError(MESSAGES.CV_NOT_FOUND, 404);
     }
 
-    const extension = application.cv.fileName.split(".").pop().toLowerCase();
+    const extension = (application.cv.fileName.split(".").pop() || "pdf").toLowerCase();
+    if (!["pdf", "doc", "docx"].includes(extension)) throw new AppError(MESSAGES.CV_FORMAT_INVALID, 415);
 
-    const publicId = application.cv.publicId.replace(
-        new RegExp(`\\.${extension}$`, "i"),
-        ""
-    );
+    const rawPublicId = application.cv.publicId.toLowerCase().endsWith("." + extension)
+        ? application.cv.publicId
+        : application.cv.publicId + "." + extension;
 
     const url = cloudinary.utils.private_download_url(
-        publicId,
+        rawPublicId,
+        "",
+        {
+            resource_type: "raw",
+            type: "authenticated",
+            expires_at: Math.floor(Date.now() / 1000) + 300,
+            attachment: disposition === "attachment"
+        }
+    );
+
+    const strippedId = application.cv.publicId.replace(new RegExp("\\." + extension + "$", "i"), "");
+    const fallbackUrl = cloudinary.utils.private_download_url(
+        strippedId,
         extension,
         {
             resource_type: "raw",
             type: "authenticated",
             expires_at: Math.floor(Date.now() / 1000) + 300,
-            attachment: false
+            attachment: disposition === "attachment"
         }
     );
 
+    const contentTypes = {
+        pdf: "application/pdf",
+        doc: "application/msword",
+        docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    };
+
     return {
         fileName: application.cv.fileName,
-        url
+        contentType: contentTypes[extension] || "application/octet-stream",
+        disposition: disposition === "attachment" ? "attachment" : "inline",
+        url,
+        fallbackUrl
     };
 };
 export default {

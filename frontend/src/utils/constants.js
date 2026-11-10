@@ -86,13 +86,13 @@ export const APPLICATION_STATUS_LABELS = {
 };
 
 export const APPLICATION_STATUS_COLORS = {
-  [APPLICATION_STATUS.APPLIED]: "bg-blue-50 text-blue-700 border-blue-200",
-  [APPLICATION_STATUS.PASSED_CV]: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  [APPLICATION_STATUS.REJECTED_CV]: "bg-rose-50 text-rose-700 border-rose-200",
-  [APPLICATION_STATUS.WAITING_INTERVIEW]: "bg-amber-50 text-amber-700 border-amber-200",
-  [APPLICATION_STATUS.INTERVIEWED]: "bg-purple-50 text-purple-700 border-purple-200",
-  [APPLICATION_STATUS.PASSED]: "bg-green-100 text-green-800 border-green-300",
-  [APPLICATION_STATUS.REJECTED_INTERVIEW]: "bg-red-50 text-red-700 border-red-200"
+  [APPLICATION_STATUS.APPLIED]: "bg-sky-50 text-sky-800 border-sky-200",
+  [APPLICATION_STATUS.PASSED_CV]: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  [APPLICATION_STATUS.REJECTED_CV]: "bg-rose-50 text-rose-800 border-rose-200",
+  [APPLICATION_STATUS.WAITING_INTERVIEW]: "bg-amber-50 text-amber-800 border-amber-200",
+  [APPLICATION_STATUS.INTERVIEWED]: "bg-teal-50 text-teal-800 border-teal-200",
+  [APPLICATION_STATUS.PASSED]: "bg-emerald-100 text-emerald-900 border-emerald-300",
+  [APPLICATION_STATUS.REJECTED_INTERVIEW]: "bg-rose-50 text-rose-800 border-rose-200"
 };
 
 export const JOB_STATUS_COLORS = {

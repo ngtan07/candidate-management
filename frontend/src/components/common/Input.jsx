@@ -47,7 +47,7 @@ export const Input = forwardRef(
             } pr-3 py-2 ${
               error
                 ? "border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-200"
-                : "border-slate-300 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-indigo-100"
+                : "border-slate-300 text-slate-900 placeholder-slate-400 focus:border-teal-600 focus:ring-teal-100"
             } ${className}`}
             {...props}
           />

@@ -36,7 +36,7 @@ export const Select = forwardRef(
           className={`block w-full rounded-lg border text-sm transition-colors px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:bg-slate-50 disabled:text-slate-500 ${
             error
               ? "border-red-300 text-red-900 focus:border-red-500 focus:ring-red-200"
-              : "border-slate-300 text-slate-900 focus:border-indigo-500 focus:ring-indigo-100"
+              : "border-slate-300 text-slate-900 focus:border-teal-600 focus:ring-teal-100"
           } ${className}`}
           {...props}
         >

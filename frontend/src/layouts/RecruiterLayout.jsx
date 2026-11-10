@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   PlusCircle,
   FileCheck,
+  CalendarDays,
   LogOut,
   Menu,
   X,
@@ -49,14 +50,14 @@ export const RecruiterLayout = () => {
         className="flex items-center gap-3 mb-8"
         onClick={onLinkClick}
       >
-        <div className="w-9 h-9 rounded-xl bg-indigo-700 flex items-center justify-center text-white shadow-md shadow-indigo-700/20">
+        <div className="w-9 h-9 rounded-xl bg-teal-700 flex items-center justify-center text-white shadow-md shadow-teal-700/20">
           <Building2 className="w-5 h-5" />
         </div>
         <div>
           <span className="font-extrabold text-slate-900 tracking-tight text-lg leading-tight block">
             TalentPulse
           </span>
-          <span className="text-[11px] font-semibold text-indigo-700 uppercase tracking-wider block">
+          <span className="text-[11px] font-semibold text-teal-700 uppercase tracking-wider block">
             Recruiter Portal
           </span>
         </div>
@@ -71,7 +72,7 @@ export const RecruiterLayout = () => {
           className={({ isActive }) =>
             `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
               isActive
-                ? "bg-indigo-700 text-white shadow-sm shadow-indigo-700/30"
+                ? "bg-teal-700 text-white shadow-sm shadow-teal-700/30"
                 : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             }`
           }
@@ -86,7 +87,7 @@ export const RecruiterLayout = () => {
             onClick={() => setJobsExpanded(!jobsExpanded)}
             className={`w-full flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
               isOnJobs
-                ? "bg-indigo-50 text-indigo-700"
+                ? "bg-teal-50 text-teal-700"
                 : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             }`}
           >
@@ -108,7 +109,7 @@ export const RecruiterLayout = () => {
                 onClick={onLinkClick}
                 className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm font-medium transition-all ${
                   isOnManageJobs
-                    ? "text-indigo-700 bg-indigo-50 font-semibold"
+                    ? "text-teal-700 bg-teal-50 font-semibold"
                     : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
@@ -119,7 +120,7 @@ export const RecruiterLayout = () => {
                 onClick={onLinkClick}
                 className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm font-medium transition-all ${
                   isOnNewJob
-                    ? "text-indigo-700 bg-indigo-50 font-semibold"
+                    ? "text-teal-700 bg-teal-50 font-semibold"
                     : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
@@ -138,7 +139,7 @@ export const RecruiterLayout = () => {
       {/* Mobile Top Header */}
       <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-40">
         <Link to="/recruiter/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-indigo-700 flex items-center justify-center text-white">
+          <div className="w-8 h-8 rounded-lg bg-teal-700 flex items-center justify-center text-white">
             <Building2 className="w-4 h-4" />
           </div>
           <span className="font-bold text-slate-900 tracking-tight">TalentPulse</span>
@@ -164,7 +165,7 @@ export const RecruiterLayout = () => {
             <SidebarContent onLinkClick={() => setMobileMenuOpen(false)} />
             <div className="p-4 border-t border-slate-100 bg-slate-50/50">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-sm">
+                <div className="w-8 h-8 rounded-full bg-teal-100 text-teal-700 font-bold flex items-center justify-center text-sm">
                   {initials}
                 </div>
                 <div className="overflow-hidden">
@@ -196,7 +197,7 @@ export const RecruiterLayout = () => {
         {/* Recruiter info & status */}
         <div className="p-4 border-t border-slate-100 bg-slate-50/50 m-3 rounded-2xl border">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-sm shrink-0">
+            <div className="w-9 h-9 rounded-full bg-teal-100 text-teal-700 font-bold flex items-center justify-center text-sm shrink-0">
               {initials}
             </div>
             <div className="overflow-hidden">

@@ -68,26 +68,26 @@ export const RecruiterDashboard = () => {
   return (
     <div className="space-y-8">
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-indigo-900 rounded-3xl p-6 sm:p-8 text-white shadow-md">
+      <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-teal-950 rounded-3xl p-6 sm:p-8 text-white shadow-md">
         <div className="max-w-2xl">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-300">
+            <span className="text-xs font-bold uppercase tracking-wider text-teal-400">
               Recruiter Hub
             </span>
             <span className="text-slate-400">•</span>
-            <span className="text-xs text-indigo-200">{user?.companyName}</span>
+            <span className="text-xs text-teal-200">{user?.companyName}</span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
             Welcome, {user?.companyName || "Recruiter"}
           </h1>
-          <p className="text-indigo-200 text-sm leading-relaxed mb-6">
+          <p className="text-teal-100 text-sm leading-relaxed mb-6">
             Oversee your recruitment pipeline, review applicants, and manage job openings.
           </p>
 
           <div className="flex flex-wrap gap-3">
             <Link to="/recruiter/jobs/new">
-              <Button variant="primary" size="sm" icon={PlusCircle} className="bg-indigo-600 hover:bg-indigo-500">
+              <Button variant="primary" size="sm" icon={PlusCircle}>
                 Post New Job
               </Button>
             </Link>
@@ -122,7 +122,7 @@ export const RecruiterDashboard = () => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-semibold text-slate-500">Total Postings</span>
-            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
               <FileCheck className="w-4 h-4" />
             </div>
           </div>
@@ -170,7 +170,7 @@ export const RecruiterDashboard = () => {
           <h2 className="text-lg font-bold text-slate-900 tracking-tight">Recent Job Postings</h2>
           <Link
             to="/recruiter/jobs"
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 inline-flex items-center gap-1"
+            className="text-xs font-semibold text-teal-700 hover:text-teal-800 inline-flex items-center gap-1"
           >
             Manage all jobs ({totalJobsCount})
             <ArrowRight className="w-3.5 h-3.5" />
@@ -203,7 +203,7 @@ export const RecruiterDashboard = () => {
                     <td className="px-6 py-4 font-semibold text-slate-900">
                       <Link
                         to={`/recruiter/jobs/${job._id}/detail`}
-                        className="hover:text-indigo-600 transition-colors"
+                        className="hover:text-teal-700 transition-colors"
                       >
                         {job.title}
                       </Link>
@@ -220,7 +220,7 @@ export const RecruiterDashboard = () => {
                     <td className="px-6 py-4">
                       <Link
                         to={`/recruiter/jobs/${job._id}/applications`}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-700 transition-colors"
                       >
                         <Users className="w-3 h-3" />
                         {job.applicationCount ?? "–"}
@@ -229,7 +229,7 @@ export const RecruiterDashboard = () => {
                     <td className="px-6 py-4 text-right whitespace-nowrap">
                       <Link
                         to={`/recruiter/jobs/${job._id}/detail`}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 hover:text-teal-900"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         View Detail

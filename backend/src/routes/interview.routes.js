@@ -1,0 +1,20 @@
+import express from "express";
+import auth from "../middlewares/auth.middleware.js";
+import controller from "../controllers/interview.controller.js";
+import { ROLE } from "../constants/role.js";
+import { body, param } from "express-validator";
+import validate from "../middlewares/validate.middleware.js";
+
+const router = express.Router();
+router.use(auth.protect, auth.authorize(ROLE.RECRUITER));
+router.get("/", controller.list);
+router.get("/passed-candidates", controller.passed);
+router.post("/bulk-schedule", body("applicationIds").isArray({ min: 1, max: 100 }), body("applicationIds.*").isMongoId(), body("interview.startTime").isISO8601(), body("interview.endTime").isISO8601(), body("interview.interviewType").isIn(["ONLINE", "ONSITE"]), body("interview.notes").optional().isString().isLength({ max: 10000 }), validate, controller.bulkSchedule);
+router.get("/applications/:applicationId", param("applicationId").isMongoId(), validate, controller.getByApplication);
+router.post("/applications/:applicationId/evaluate", param("applicationId").isMongoId(), body("notes").optional().isString().isLength({ max: 10000 }), validate, controller.evaluate);
+router.get("/:id", param("id").isMongoId(), validate, controller.detail);
+router.patch("/:id/notes", param("id").isMongoId(), body("notes").isString().isLength({ max: 10000 }), validate, controller.notes);
+router.post("/applications/:applicationId/schedule", param("applicationId").isMongoId(), body("startTime").isISO8601(), body("endTime").isISO8601(), body("interviewType").isIn(["ONLINE", "ONSITE"]), body("notes").optional().isString().isLength({ max: 10000 }), validate, controller.schedule);
+router.post("/applications/:applicationId/invitation", param("applicationId").isMongoId(), body("subject").trim().notEmpty(), body("body").optional().isString(), validate, controller.invitation);
+router.post("/applications/:applicationId/result-email", param("applicationId").isMongoId(), body("result").isIn(["PASSED", "REJECTED"]), body("subject").trim().notEmpty(), body("body").optional().isString(), validate, controller.result);
+export default router;

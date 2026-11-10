@@ -1,48 +1,21 @@
-import React from "react";
-import useAuth from "../../hooks/useAuth";
+import React, { useEffect, useState } from "react";
 import PageHeader from "../../components/common/PageHeader";
-import { ShieldAlert, Info, Database } from "lucide-react";
+import Button from "../../components/common/Button";
+import Input from "../../components/common/Input";
+import adminService from "../../services/adminService";
 
-export const AdminDashboard = () => {
-  const { user } = useAuth();
-
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Admin Management Console"
-        subtitle="Platform oversight and governance portal."
-      />
-
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
-        <div className="flex items-start gap-4 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-            <Database className="w-6 h-6" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 mb-1">
-              Backend Admin APIs Not Implemented in Current MVP
-            </h2>
-            <p className="text-sm text-slate-600 leading-relaxed max-w-2xl">
-              The current TalentPulse backend architecture provides database schema definitions and registration statuses (Pending, Approved, Rejected), but does not expose administrative routes or endpoints for recruiter verification, user management, or audit inspection in this release.
-            </p>
-          </div>
-        </div>
-
-        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-2">
-          <div className="flex items-center gap-2 font-semibold text-slate-700">
-            <Info className="w-4 h-4 text-indigo-500" />
-            <span>Developer Reference:</span>
-          </div>
-          <ul className="list-disc list-inside space-y-1 text-slate-500 pl-2">
-            <li>Authenticated User Email: <span className="font-mono text-slate-800">{user?.email}</span></li>
-            <li>System Role: <span className="font-mono text-slate-800">{user?.role}</span></li>
-            <li>No fake statistics or fabricated endpoints are rendered in compliance with architectural guidelines.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default AdminDashboard;
-
+export default function AdminDashboard() {
+  const [tab, setTab] = useState("pending"); const [data, setData] = useState([]); const [search, setSearch] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false); const [detail, setDetail] = useState(null);
+  const load = async () => { setError(""); try { const res = tab === "pending" ? await adminService.pending() : tab === "recruiters" ? await adminService.recruiters({ search }) : await adminService.jobs({ search }); setData(tab === "jobs" ? res.data?.jobs || [] : res.data?.recruiters || []); } catch (e) { setError(e.message); } };
+  useEffect(() => { load(); }, [tab]);
+  useEffect(() => { const change = e => setTab(e.detail); window.addEventListener("admin-tab", change); return () => window.removeEventListener("admin-tab", change); }, []);
+  const act = async fn => { setBusy(true); setError(""); try { await fn(); await load(); } catch (e) { setError(e.message); } finally { setBusy(false); } };
+  const review = async (id, status) => { const reason = status === "REJECTED" ? window.prompt("Reason for rejection:") : ""; if (status === "REJECTED" && !reason?.trim()) return; await adminService.review(id, status, reason); };
+  return <div className="space-y-6"><PageHeader title="Admin management" subtitle="Review recruiter registrations and manage platform jobs." />
+    <div className="flex flex-wrap gap-2">{[["pending", "Pending recruiters"], ["recruiters", "Recruiters"], ["jobs", "Jobs"]].map(([key, label]) => <button key={key} onClick={() => setTab(key)} className={`px-4 py-2 rounded-lg text-sm font-semibold ${tab === key ? "bg-indigo-700 text-white" : "bg-white border text-slate-700"}`}>{label}</button>)}</div>
+    {tab !== "pending" && <div className="flex gap-2"><Input aria-label="Search" placeholder={tab === "jobs" ? "Search job titles" : "Search company or email"} value={search} onChange={e => setSearch(e.target.value)} /><Button onClick={load}>Search</Button></div>}
+    {error && <p role="alert" className="text-red-600">{error}</p>}
+    <div className="bg-white rounded-xl border divide-y">{data.length ? data.map(item => tab === "jobs" ? <article key={item._id} className="p-4 flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">{item.title}</h2><p className="text-sm text-slate-500">{item.recruiterId?.companyName} · {item.status} · {item.isVisible ? "Visible" : "Hidden"}</p></div><Button disabled={busy} variant="secondary" onClick={() => act(() => item.isVisible ? adminService.hideJob(item._id) : adminService.restoreJob(item._id))}>{item.isVisible ? "Hide job" : "Restore job"}</Button></article> : <article key={item._id} className="p-4 flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">{item.companyName}</h2><p className="text-sm text-slate-500">{item.email} · {item.registrationStatus} · {item.isActive ? "Active" : "Suspended"}</p><p className="text-xs text-slate-500">{item.businessRegistrationNumber} · {item.address}</p></div><div className="flex flex-wrap gap-2">{tab === "recruiters" && <Button variant="secondary" onClick={async () => { try { const res = await adminService.recruiter(item._id); setDetail(res.data); } catch (e) { setError(e.message); } }}>Details</Button>}{tab === "pending" && <><Button disabled={busy} onClick={() => act(() => review(item._id, "APPROVED"))}>Approve</Button><Button disabled={busy} variant="secondary" onClick={() => act(() => review(item._id, "REJECTED"))}>Reject</Button></>}{tab === "recruiters" && <><Button disabled={busy} variant="secondary" onClick={() => act(() => item.isActive ? adminService.suspend(item._id) : adminService.reactivate(item._id))}>{item.isActive ? "Suspend" : "Reactivate"}</Button>{item.registrationStatus !== "PENDING" && <Button disabled={busy} variant="secondary" onClick={() => act(() => adminService.sendRegistrationEmail(item._id))}>Send result email</Button>}</>}</div></article>) : <p className="p-6 text-slate-500">No records found.</p>}</div>
+    {detail && <div className="fixed inset-0 z-50 bg-slate-900/40 p-4 overflow-auto" role="dialog" aria-modal="true"><section className="max-w-2xl mx-auto mt-12 bg-white rounded-xl p-6 space-y-3"><div className="flex justify-between"><h2 className="text-xl font-bold">{detail.recruiter.companyName}</h2><button onClick={() => setDetail(null)} aria-label="Close">×</button></div><p>{detail.recruiter.email} · {detail.recruiter.phone}</p><p>{detail.recruiter.address} · {detail.recruiter.website}</p><p>Business registration: {detail.recruiter.businessRegistrationNumber}</p><p>License: <a className="text-indigo-700 underline" href={detail.recruiter.businessLicenseUrl} target="_blank" rel="noreferrer">View document</a></p><h3 className="font-semibold pt-2">Associated jobs</h3>{detail.jobs.map(job => <p key={job._id} className="text-sm">{job.title} · {job.status} · {job.isVisible ? "Visible" : "Hidden"}</p>)}<Button variant="secondary" onClick={() => setDetail(null)}>Close</Button></section></div>}
+  </div>;
+}
